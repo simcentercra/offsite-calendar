@@ -116,6 +116,22 @@
     <!-- Main Content -->
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6">
 
+
+        <!-- Google Apps Script Cloud & Email Sync Banner -->
+        <div id="gasStatusBanner" class="bg-indigo-50/90 border border-indigo-200 rounded-2xl px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs sm:text-sm">
+            <div class="flex items-center gap-2.5 text-indigo-950">
+                <i data-lucide="mail-check" class="w-4 h-4 text-indigo-600 shrink-0"></i>
+                <span id="gasStatusText">
+                    ระบบบันทึกไฟล์ลง Google Drive และแจ้งเตือนอีเมลล่วงหน้า 1 วัน: <strong>ยังไม่ได้ตั้งค่า Web App URL</strong>
+                </span>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+                <button onclick="openGasModal()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg transition-colors">
+                    ตั้งค่า Drive &amp; แจ้งเตือนเมล
+                </button>
+            </div>
+        </div>
+
         <!-- Folder Sync Status Bar -->
         <div id="folderStatusBanner" class="bg-amber-50/90 border border-amber-200 rounded-2xl px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs sm:text-sm">
             <div class="flex items-center gap-2.5 text-amber-900">
@@ -478,6 +494,70 @@
         </div>
     </div>
 
+
+    <!-- ===================================================================== -->
+    <!-- MODAL 4: GOOGLE DRIVE & EMAIL REMINDER (APPS SCRIPT) MODAL          -->
+    <!-- ===================================================================== -->
+    <div id="gasModal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-2xl overflow-hidden my-8">
+            <div class="bg-gradient-to-r from-indigo-600 to-blue-600 px-6 py-4 text-white flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <i data-lucide="cloud-upload" class="w-5 h-5 text-indigo-100"></i>
+                    <h3 class="font-heading text-lg font-bold">
+                        ตั้งค่าบันทึกไฟล์ลง Google Drive และแจ้งเตือนอีเมลล่วงหน้า 1 วัน
+                    </h3>
+                </div>
+                <button onclick="closeGasModal()" class="text-white/80 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-4 max-h-[80vh] overflow-y-auto text-sm">
+                <div>
+                    <label for="gasWebAppUrl" class="block font-semibold text-slate-800 mb-1">
+                        Google Apps Script Web App URL <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="url" id="gasWebAppUrl" placeholder="https://script.google.com/macros/s/xxxxxxxx/exec"
+                        class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <p class="text-xs text-slate-500 mt-1">
+                        เมื่อเพิ่ม/แก้ไข/ลบรายการในปฏิทิน ระบบจะส่งข้อมูลและไฟล์แนบไปเก็บลง Google Drive + Google Sheets และดึงข้อมูลจาก Cloud มาซิงก์ให้อัตโนมัติ
+                    </p>
+                </div>
+
+                <div>
+                    <label for="gasNotifyEmails" class="block font-semibold text-slate-800 mb-1">
+                        อีเมลผู้รับการแจ้งเตือนล่วงหน้า 1 วัน (คั่นด้วยจุลภาค ,)
+                    </label>
+                    <input type="text" id="gasNotifyEmails" placeholder="เช่น staff1@example.com, staff2@example.com"
+                        class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <p class="text-xs text-slate-500 mt-1">
+                        หากเว้นว่าง ระบบใน Apps Script จะส่งหาอีเมลเจ้าของสคริปต์ (Session.getActiveUser().getEmail()) หรือตั้งค่าเพิ่มเติมในโค้ด Apps Script ได้
+                    </p>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-between gap-2 pt-2">
+                    <button type="button" onclick="syncFromGasCloud(true)" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-xl transition-colors">
+                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                        <span>ดึงข้อมูลล่าสุดจาก Google Drive/Sheets ตอนนี้</span>
+                    </button>
+                    <button type="button" onclick="testGasConnection()" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl transition-colors">
+                        <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                        <span>ทดสอบส่งข้อมูลไป Google Drive</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-slate-50 px-6 py-4 border-t border-slate-200 flex justify-end gap-2">
+                <button type="button" onclick="closeGasModal()" class="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-200 hover:bg-slate-300 rounded-xl">
+                    ยกเลิก
+                </button>
+                <button type="button" onclick="saveGasSettings()" class="px-5 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm">
+                    บันทึกการตั้งค่า Drive &amp; เมล
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- ===================================================================== -->
     <!-- APPLICATION LOGIC (JavaScript)                                        -->
     <!-- ===================================================================== -->
@@ -646,8 +726,140 @@
                 seedSampleEvents();
             }
 
+
+        // --- 8B. GOOGLE DRIVE & EMAIL REMINDER INTEGRATION (APPS SCRIPT) ---
+        const GAS_URL_KEY = 'offsite_calendar_gas_url_v1';
+        const GAS_EMAILS_KEY = 'offsite_calendar_gas_emails_v1';
+
+        function getGasUrl() {
+            return (localStorage.getItem(GAS_URL_KEY) || '').trim();
+        }
+
+        function getGasEmails() {
+            return (localStorage.getItem(GAS_EMAILS_KEY) || '').trim();
+        }
+
+        function updateGasStatusUI() {
+            const url = getGasUrl();
+            const emails = getGasEmails();
+            const statusText = document.getElementById('gasStatusText');
+            if (!statusText) return;
+
+            if (url) {
+                const emailLabel = emails ? `แจ้งเตือนไปที่: <strong>${escapeHtml(emails)}</strong>` : 'ใช้ผู้รับตามค่าใน Apps Script';
+                statusText.innerHTML = `
+                    <span class="text-indigo-950">
+                        เชื่อมต่อ Google Drive &amp; แจ้งเตือนเมลล่วงหน้า 1 วันแล้ว (${emailLabel})
+                    </span>
+                `;
+            } else {
+                statusText.innerHTML = `
+                    <span class="text-indigo-950">
+                        ระบบบันทึกไฟล์ลง Google Drive และแจ้งเตือนอีเมลล่วงหน้า 1 วัน: <strong>ยังไม่ได้ตั้งค่า Web App URL</strong>
+                    </span>
+                `;
+            }
+        }
+
+        function openGasModal() {
+            document.getElementById('gasWebAppUrl').value = getGasUrl();
+            document.getElementById('gasNotifyEmails').value = getGasEmails();
+            document.getElementById('gasModal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeGasModal() {
+            document.getElementById('gasModal').classList.add('hidden');
+        }
+
+        function saveGasSettings() {
+            const url = document.getElementById('gasWebAppUrl').value.trim();
+            const emails = document.getElementById('gasNotifyEmails').value.trim();
+            localStorage.setItem(GAS_URL_KEY, url);
+            localStorage.setItem(GAS_EMAILS_KEY, emails);
+            updateGasStatusUI();
+            closeGasModal();
+            showToast('บันทึกการตั้งค่า Google Drive และอีเมลแจ้งเตือนเรียบร้อยแล้ว', 'success');
+            if (url) {
+                syncFromGasCloud(true);
+            }
+        }
+
+        async function pushToGasCloud(actionType, entryData = null) {
+            const url = getGasUrl();
+            if (!url) return false;
+
+            try {
+                const payload = {
+                    action: actionType,
+                    notifyEmails: getGasEmails(),
+                    entry: entryData,
+                    allEvents: events
+                };
+
+                await fetch(url, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                return true;
+            } catch (err) {
+                console.error('GAS push error:', err);
+                showToast('ส่งข้อมูลไป Google Drive ไม่สำเร็จ: ' + err.message, 'error');
+                return false;
+            }
+        }
+
+        async function syncFromGasCloud(showFeedback = false) {
+            const url = getGasUrl();
+            if (!url) {
+                if (showFeedback) showToast('กรุณากรอก Google Apps Script Web App URL ก่อน', 'error');
+                return;
+            }
+            try {
+                const res = await fetch(`${url}?action=getEvents&t=${Date.now()}`);
+                if (!res.ok) throw new Error('ไม่สามารถดึงข้อมูลจาก Web App ได้');
+                const data = await res.json();
+                if (data && Array.isArray(data.events)) {
+                    const localMap = new Map(events.map(e => [e.id, e]));
+                    events = data.events.map(rem => {
+                        const loc = localMap.get(rem.id);
+                        return {
+                            ...rem,
+                            file: (rem.file && rem.file.dataUrl) ? rem.file : (loc && loc.file ? loc.file : (rem.file || null))
+                        };
+                    });
+                    saveEventsToStorage();
+            if (typeof pushToGasCloud === "function") pushToGasCloud("upsert", entryData);
+                    renderCalendar();
+                    if (showFeedback) showToast(`ซิงก์ข้อมูลจาก Google Drive/Sheets สำเร็จ (${events.length} รายการ)`, 'success');
+                }
+            } catch (err) {
+                console.warn('GAS sync warning:', err);
+                if (showFeedback) showToast('ดึงข้อมูลจาก Cloud ไม่สำเร็จ (ตรวจสอบสิทธิ์ Anyone ใน Web App)', 'error');
+            }
+        }
+
+        async function testGasConnection() {
+            const urlInput = document.getElementById('gasWebAppUrl').value.trim();
+            if (!urlInput) {
+                showToast('กรุณากรอก Web App URL ก่อนทดสอบ', 'error');
+                return;
+            }
+            localStorage.setItem(GAS_URL_KEY, urlInput);
+            localStorage.setItem(GAS_EMAILS_KEY, document.getElementById('gasNotifyEmails').value.trim());
+            updateGasStatusUI();
+            const ok = await pushToGasCloud('sync_all', null);
+            if (ok) {
+                showToast('ส่งคำขอซิงก์ข้อมูลไปยัง Google Drive แล้ว กรุณาตรวจสอบโฟลเดอร์/ชีตใน Drive', 'success');
+            }
+        }
+
+            updateGasStatusUI();
             populateStaffFilter();
             renderCalendar();
+            if (getGasUrl()) syncFromGasCloud(false);
             lucide.createIcons();
         }
 
@@ -1404,6 +1616,7 @@
 
             events = events.filter(item => item.id !== eventId);
             saveEventsToStorage();
+            if (typeof pushToGasCloud === "function") pushToGasCloud("delete", { id: eventId });
             if (selectedDirHandle) {
                 syncToFolder(null);
             }
